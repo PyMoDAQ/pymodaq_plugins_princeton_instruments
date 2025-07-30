@@ -1,0 +1,58 @@
+{
+    "gain" : {
+        "lf_string" : "Camera.Adc.AnalogGain",
+        "type" : "int",
+        "values" : {"Low" : 1, "Medium" : 2, "High" : 3},
+        "read_only" : false,
+        "default_value" : 1,
+        "values_type" : "dict"
+    },
+    "adc_speed" : {
+        "lf_string" : "Camera.Adc.Speed",
+        "type" : "float",
+        "values" : [0.5,1.0,5.0],
+        "read_only" : false,
+        "default_value" : 1.0,
+        "values_type" : "float"
+    },
+    "shift_rate" : {
+        "lf_string" : "CameraSettings.ReadoutControlVerticalShiftRate",
+        "type" : "float",
+        "values" : [15.2,19.0,38.0,95.0],
+        "read_only" : false,
+        "default_value" : 38.0,
+        "values_type" : "float"
+    },
+    "readout_mode" : {
+        "lf_string" : "CameraSettings.ReadoutControlMode",
+        "type" : "int",
+        "values" : {"FullFrame" : 1, "FrameTransfer" : 2, "Kinetics" : 3, "SpectraKinetics" : 4},
+        "read_only" : false,
+        "default_value" : 1,
+        "values_type" : "dict"
+    },
+    "frame_rate" : {
+        "lf_string" : "CameraSettings.AcquisitionFrameRate",
+        "type" : "float",
+        "values" : "None",
+        "read-only" : true,
+        "default_value" : 30.0,
+        "values_type" : "float"
+    },
+    "num_frames" : {
+        "lf_string" : "ExperimentSettings.AcquisitionFramesToStore",
+        "type" : "int",
+        "values" : "None",
+        "read_only" : false,
+        "default_value" : 1,
+        "values_type" : "int"
+    },
+    "exposure_time" : {
+        "lf_string" : "CameraSettings.ShutterTimingExposureTime",
+        "type" : "float",
+        "values" : "None",
+        "read_only" : false,
+        "default_value" : 50.0,
+        "values_type" : "float"
+    }
+}

@@ -6,13 +6,14 @@ h5exporters = false  # true if plugin contains custom h5 file exporters
 scanners = false  # true if plugin contains custom scan layout (daq_scan extensions)
 
 [urls]
-package-url = 'https://github.com/PyMoDAQ/pymodaq_plugins_template' #todo modify url by your plugin url
+package-url = 'https://github.com/adriente/pymodaq_plugins_princeton_instruments' #todo modify url by your plugin url
 
 [project]
-name = "pymodaq_plugins_template" #todo modify template by your plugin short name
+name = "pymodaq_plugins_princeton_instruments" #todo modify template by your plugin short name
 description = 'some word about your plugin'
 dependencies = [
     "pymodaq>=5.0.0",
+    "pythonnet",
     #todo: list here all dependencies your package may have
 ]
 
