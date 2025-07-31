@@ -37,9 +37,9 @@ from pymodaq_utils.logger import set_logger, get_module_name
 import numpy as np
 from typing import Dict, Any, ClassVar
 
-settings_path = Path(__file__).parent / Path('fergie_settings.json')
-
 logger = set_logger(get_module_name(__file__))
+
+# settings_path = Path(__file__).parent / Path('fergie_settings.json')
 
 class FergieConfig :
 
@@ -77,7 +77,7 @@ class Fergie :
         self._data_shape = (256,1024)
 
     def create_settings(self) : 
-        with open(settings_path) as f :
+        with open(self.config.config['FERGIE']['config']['settings_file']) as f :
             settings_dict = json.load(f) 
             
         # fields = [(k, ClassVar[Dict[str,Any]], field(default= settings_dict[k])) for k in settings_dict.keys()]
@@ -126,8 +126,15 @@ class Fergie :
     def set_setting(self, setting_key, value) : 
         if self.settings[setting_key]['read_only'] : 
             logger.info("This variable is read-only, impossible to set.")
-        else : 
-            if (value in self.settings[setting_key]['values']) or (self.settings[setting_key]['values'] == 'None') :
+        else :
+            if self.settings[setting_key]['values'] == 'None' : 
+                if self.settings[setting_key]['type'] == 'int' : 
+                    c_value = Int32(value)
+                elif self.settings[setting_key]['type'] == 'float' :
+                    c_value = Double(value) 
+                else : 
+                    raise ValueError('Type not understood.') 
+            elif (value in self.settings[setting_key]['values']) :
                 if self.settings[setting_key]['values_type'] == 'dict' : 
                     input_val = self.settings[setting_key]['values'][value]
                 # elif value < self.settings[setting_key].get("min") : 
@@ -142,7 +149,7 @@ class Fergie :
                     c_value = Double(input_val) 
                 else : 
                     raise ValueError('Type not understood.')
-                self.set_command(self.settings[setting_key]['lf_string'],
+            self.set_command(self.settings[setting_key]['lf_string'],
                                      c_value)
                 
     def start(self) : 
@@ -221,7 +228,7 @@ class Fergie :
     def x(self, value : int) :
         wl_value = within_limits(value,0,1024-self._width)
         self._x = wl_value
-        self._width += - wl_value 
+        # self._width += - wl_value 
         self._x_binning = find_closest_divisor(self._width,self._x_binning)
         roi = RegionOfInterest(self._x,
                                self._y,
@@ -240,7 +247,7 @@ class Fergie :
     def y(self, value : int) :
         wl_value = within_limits(value,0,256-self._height)
         self._y = wl_value
-        self._height += - wl_value 
+        # self._height += - wl_value 
         self._y_binning = find_closest_divisor(self._height,self._y_binning)
         roi = RegionOfInterest(self._x,
                                self._y,
@@ -325,11 +332,11 @@ class Fergie :
 def within_limits(val, lower=None, upper=None):
     """ limit a value to be within a minimum and maximum
     """
-    if lower and upper:
-        assert upper > lower, "input range given is impossible"
-    if lower:
+    if not(lower is None) and not(upper is None) :
+        assert upper >= lower, "input range given is impossible"
+    if not(lower is None):
         val = max(lower, val)
-    if upper:
+    if not(upper is None):
         val = min(val, upper)
     return val
 
@@ -372,16 +379,21 @@ if __name__ == '__main__' :
         # f.print_devices()
         import time
         time.sleep(1)
-        f.start(3)
+        f.start()
         f.y_binning = 256
-        f.start(3)
+        f.start()
         f.width = 112
         f.height = 110
         f.x = 780
         f.y = 34
         print(f.x_binning)
         print(f.y_binning)
-        f.start(3)
+        print(f.get_setting('gain'))
+        print(f.get_setting('adc_speed'))
+        print(f.get_setting('shift_rate'))
+        print(f.get_setting('exposure_time'))
+        print(f.get_setting('readout_mode'))
+        f.start()
         f.close()
     finally : 
         f.close()

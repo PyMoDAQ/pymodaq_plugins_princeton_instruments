@@ -3,6 +3,7 @@ import numpy as np
 from pymodaq_utils.utils import ThreadCommand
 from pymodaq_data.data import DataToExport, Axis
 from pymodaq_gui.parameter import Parameter
+from pymodaq_gui.parameter.utils import iter_children
 
 from pymodaq.control_modules.viewer_utility_classes import DAQ_Viewer_base, comon_parameters, main
 from pymodaq.utils.data import DataFromPlugins
@@ -39,6 +40,14 @@ class DAQ_2DViewer_Fergie(DAQ_Viewer_base):
 
     """
     params = comon_parameters + [
+        {'title' : "ROI settings", 'name' : "roi_settings", 'type' : 'group', 'expanded' : True, 'children' : [
+            {'title' : 'x origin', 'name' : 'x', 'type' : 'int', 'value' : 0},
+            {'title' : 'y origin', 'name' : 'y', 'type' : 'int', 'value' : 0},
+            {'title' : 'width', 'name' : 'width', 'type' : 'int', 'value' : 1024},
+            {'title' : 'height', 'name' : 'height', 'type' : 'int', 'value' : 256},
+            {'title' : 'x binning', 'name' : 'x_binning', 'type' : 'int', 'value' : 1},
+            {'title' : 'y binning', 'name' : 'y_binning', 'type' : 'int', 'value' : 1},
+        ]}
     ]
 
     def ini_attributes(self):
@@ -50,6 +59,7 @@ class DAQ_2DViewer_Fergie(DAQ_Viewer_base):
 
         self.x_axis = None
         self.y_axis = None
+        self.running = False
 
     def commit_settings(self, param: Parameter):
         """Apply the consequences of a change of value in the detector settings
@@ -60,9 +70,19 @@ class DAQ_2DViewer_Fergie(DAQ_Viewer_base):
             A given parameter (within detector_settings) whose value has been changed by the user
         """
         # TODO for your custom plugin
-        if param.name() == "a_parameter_you've_added_in_self.params":
-            self.controller.your_method_to_apply_this_param_change()
-        #elif ...
+        if param.name() in iter_children(self.settings.child('camera_settings'),[]):
+            self.set_camera_setting(param)
+        if param.name() in iter_children(self.settings.child('roi_settings'), []) : 
+            self.set_roi_settings(param)
+            self.settings.child('roi_settings')['x'] = self.controller.x
+            self.settings.child('roi_settings')['y'] = self.controller.y
+            self.settings.child('roi_settings')['width'] = self.controller.width
+            self.settings.child('roi_settings')['height'] = self.controller.height
+            self.settings.child('roi_settings')['x_binning'] = self.controller.x_binning
+            self.settings.child('roi_settings')['y_binning'] = self.controller.y_binning
+        # self.controller.get_setting('')
+        new_frame_rate = self.controller.get_setting('frame_rate')
+        self.settings.child("camera_settings")['frame_rate'] = new_frame_rate
 
     def ini_detector(self, controller=None):
         """Detector communication initialization
@@ -88,9 +108,34 @@ class DAQ_2DViewer_Fergie(DAQ_Viewer_base):
             initialized = True
 
         self.set_axes()
+        self.create_camera_settings()
 
         info = "Whatever info you want to log"
         return info, initialized
+    
+    def set_roi_settings(self,param) : 
+        self.controller.__setattr__(param.name(),param.value())
+    
+    def create_camera_settings(self) : 
+        settings_list = []
+        for key in self.controller.settings.keys() :
+            if self.controller.settings[key]['values_type'] == 'dict' : 
+                type = "list"
+                limits =  list(self.controller.settings[key]['values'].keys())
+                settings_list.append({'title' : key, 'name' : key, 'type' : type, 'limits' : limits, 'readonly' : self.controller.settings[key]['read_only']   })
+            elif self.controller.settings[key]['values_type'] == 'list' :
+                type = "list"
+                limits =  self.controller.settings[key]['values']
+                settings_list.append({'title' : key, 'name' : key, 'type' : type, 'limits' : limits, 'readonly' : self.controller.settings[key]['read_only']   })
+            else : 
+                settings_list.append({'title' : key, 'name' : key, 'type' : self.controller.settings[key]['values_type'], 'value' : self.controller.settings[key]['default_value'], 'readonly' : self.controller.settings[key]['read_only'] })
+            
+        settings_group = {"title" : "Camera Settings", "name" : "camera_settings", "type" : "group", "expanded" : True, "children" : settings_list}
+
+        self.settings.addChildren([settings_group])
+
+    def set_camera_setting(self,param) : 
+        self.controller.set_setting(setting_key=param.name(),value = param.value())
     
     def set_axes(self) : 
         data_x_axis = np.linspace(start= 0, stop = self.controller._data_shape[0], num = self.controller._data_shape[0])
@@ -107,8 +152,9 @@ class DAQ_2DViewer_Fergie(DAQ_Viewer_base):
 
     def close(self):
         """Terminate the communication protocol"""
-        print('I AM CLOSING')
+
         self.controller.close()
+
 
     def grab_data(self, Naverage=1, **kwargs):
         """Start a grab from the detector
@@ -124,29 +170,33 @@ class DAQ_2DViewer_Fergie(DAQ_Viewer_base):
         ## TODO for your custom plugin: you should choose EITHER the synchrone or the asynchrone version following
 
         ##synchrone version (blocking function)
+        self.running = True
         try:
 
             if kwargs.get('live',False) == True :
-                while True : 
-                    try : 
-                        data = self.controller.start()
-                        self.dte_signal.emit(DataToExport('Fergie',
-                                            data=[DataFromPlugins(name='CCD', data=data,
-                                                                    dim='Data2D', labels=['Munchkin'],
-                                                                    x_axis=self.x_axis,
-                                                                    y_axis=self.y_axis), ]))
-                    except KeyboardInterrupt : 
-                        print('Keyboard stop')
-                        break
+                while self.running :  
+                    data = self.controller.start()
+                    if self.controller._data_shape[0] == 1 : 
+                        dim = "Data1D"
+                        data = data.reshape((self.controller._data_shape[1],))
+                    else : 
+                        dim = "Data2D"
+                    self.dte_signal.emit(DataToExport('Fergie',
+                                        data=[DataFromPlugins(name='CCD', data=[np.atleast_1d(
+                                                data) ],
+                                                                dim=dim, labels=['Munchkin']) ]))
 
                     QtWidgets.QApplication.processEvents()
             else:
                 data = self.controller.start()
+                if self.controller._data_shape[0] == 1 : 
+                    dim = "Data1D"
+                    data = data.reshape((self.controller._data_shape[1],))
+                else : 
+                    dim = "Data2D"
                 self.dte_signal.emit(DataToExport('Fergie',
-                                          data=[DataFromPlugins(name='CCD', data=data,
-                                                                dim='Data2D', labels=['Munchkin'],
-                                                                x_axis=self.x_axis,
-                                                                y_axis=self.y_axis), ])) # will trigger the waitfor acquisition
+                                          data=[DataFromPlugins(name='CCD', data=[np.atleast_1d(data) ],
+                                                                dim=dim, labels=['Munchkin']) ])) # will trigger the waitfor acquisition
 
 
         except Exception as e:
@@ -176,7 +226,7 @@ class DAQ_2DViewer_Fergie(DAQ_Viewer_base):
         ## TODO for your custom plugin
         # raise NotImplementedError  # when writing your own plugin remove this line
         # self.controller.your_method_to_stop_acquisition()  # when writing your own plugin replace this line
-        self.emit_status(ThreadCommand('stop', ['detector stopped']))
+        self.running = False
         # #############################
         # return ''
 
