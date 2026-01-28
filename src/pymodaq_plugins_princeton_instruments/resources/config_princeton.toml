@@ -1,0 +1,15 @@
+[FERGIE]
+
+[FERGIE.config]
+
+exp_folder = 'C:\\Users\\HFLight\\Documents\\LightField\\Experiments'
+settings_file = 'C:\\Users\\HFLight\\Documents\\LightField\\fergie_settings.json'
+
+name = 'FERGIE: 256B/FT eXcelon'
+serial_number = 'F071718001'
+
+[PIXIS]
+
+[PIXIS.config]
+
+serial_number = '0205060002'

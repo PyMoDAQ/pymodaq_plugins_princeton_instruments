@@ -90,7 +90,7 @@ class Fergie :
         if not(self.device_found()) : 
             raise ConnectionError("Camera not found. Please add a camera and try again.")
         self.device_name_list = self.list_devices()
-        self.camera = ('FERGIE: 256B/FT eXcelon','F071718001')
+        self.camera = (self.config['FERGIE']['config']['name'],self.config['FERGIE']['config']['serial_number'])
         self.experiment.SetCustomRegions([RegionOfInterest(0,0,1024,256,1,1)])
         # self.roi = self.experiment.FullSensorRegion
 
