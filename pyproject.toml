@@ -14,16 +14,14 @@ description = 'some word about your plugin'
 dependencies = [
     "pymodaq>=5.0.0",
     "pythonnet",
-    #todo: list here all dependencies your package may have
+    "pylablib"
 ]
 
 authors = [
-    {name = "Name Surname", email = "myname@test.fr"},
-    #todo: list here all authors of your plugin
+    {name = "Adrien Teurtrie", email = "adrien.teurtrie@cemes.fr"},
 ]
 maintainers = [
-    {name = "Name Surname", email = "myname@test.fr"},
-    #todo: list here all maintainers of your plugin
+    {name = "Adrien Teurtrie", email = "adrien.teurtrie@cemes.fr"},
 ]
 
 # nottodo: leave everything below as is!
