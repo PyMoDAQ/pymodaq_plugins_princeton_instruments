@@ -264,7 +264,7 @@ class DAQ_2DViewer_Picam(DAQ_Viewer_base):
             others optionals arguments
         """
         try:
-            if kwargs.get('live',False) == True :
+            if kwargs.get('live', False) :
                 self.controller.start_acquisition()
                 self.callback_signal.emit(0)
             else:
@@ -274,19 +274,19 @@ class DAQ_2DViewer_Picam(DAQ_Viewer_base):
         except Exception as e:
             self.emit_status(ThreadCommand('Update_Status', [str(e), "log"]))
 
-    def emit_data(self, data : np.ndarray) :
+    def emit_data(self, data: np.ndarray) :
         """
         Updates the current displayed data.
         """
-        binned_data = bin2d(data,self.x_binning,self.y_binning)
+        binned_data = bin2d(data,self.x_binning, self.y_binning)
         dfp = self.prepare_dfp(binned_data)
-        self.dte_signal.emit(DataToExport('Picam',
-                                            data=dfp))
+        self.dte_signal.emit(DataToExport('Picam', data=dfp))
 
     def stop(self):
         """Stop the current grab hardware wise if necessary"""
         self.controller.clear_acquisition()
         logger.info("Picam acquisition stopped.")
+
 
 class PicamCallback(QtCore.QObject):
     """
@@ -336,6 +336,7 @@ class PicamCallback(QtCore.QObject):
                         break
                 except TypeError :
                     break
+
 
 if __name__ == '__main__':
     main(__file__)
