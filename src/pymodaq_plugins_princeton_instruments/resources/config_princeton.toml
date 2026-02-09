@@ -8,8 +8,9 @@ settings_file = 'C:\\Users\\HFLight\\Documents\\LightField\\fergie_settings.json
 name = 'FERGIE: 256B/FT eXcelon'
 serial_number = 'F071718001'
 
-[PIXIS]
+[PICAM]
 
-[PIXIS.config]
+[PICAM.config]
 
-serial_number = '0205060002'
+serial_number = ''
+serial_numbers = []
