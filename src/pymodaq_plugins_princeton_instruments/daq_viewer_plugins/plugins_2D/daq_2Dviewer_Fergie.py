@@ -39,6 +39,8 @@ class DAQ_2DViewer_Fergie(DAQ_Viewer_base):
     # TODO add your particular attributes here if any
 
     """
+
+    supported_platforms = ('win32',)  # a Windows .NET driver
     params = comon_parameters + [
         {'title' : "ROI settings", 'name' : "roi_settings", 'type' : 'group', 'expanded' : True, 'children' : [
             {'title' : 'x origin', 'name' : 'x', 'type' : 'int', 'value' : 0},
